@@ -1,6 +1,7 @@
 # Advent of Code 2025 - Zig
 
 Zig scaffolding for Advent of Code 2025 (12 days).
+I'm using Claude to help with error messages and to generate commit messages, otherwise all code is written without AI.
 
 ## Quick Start
 
