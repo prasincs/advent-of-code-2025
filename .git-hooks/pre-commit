@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Pre-commit hook for Zig code quality checks
+# To install: ln -s ../../.git-hooks/pre-commit .git/hooks/pre-commit
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Check formatting
+echo "  → Checking code formatting..."
+if ! zig fmt --check . >/dev/null 2>&1; then
+    echo "    ✗ Code formatting issues found!"
+    echo "    Run 'zig build fmt-fix' or 'make fmt' to fix formatting."
+    exit 1
+fi
+echo "    ✓ Code formatting OK"
+
+# Run tests
+echo "  → Running tests..."
+if ! zig build test >/dev/null 2>&1; then
+    echo "    ✗ Tests failed!"
+    echo "    Run 'zig build test' to see details."
+    exit 1
+fi
+echo "    ✓ Tests passed"
+
+echo "✓ All pre-commit checks passed!"

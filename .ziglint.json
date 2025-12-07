@@ -1,0 +1,7 @@
+{
+  "max_line_length": 100,
+  "indent_size": 4,
+  "check_unused_vars": true,
+  "check_shadowing": true,
+  "prefer_const": true
+}

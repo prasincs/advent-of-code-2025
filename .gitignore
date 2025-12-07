@@ -1,0 +1,21 @@
+# Zig build artifacts
+zig-cache/
+zig-out/
+.zig-cache/
+
+# Environment files with secrets
+.env
+
+# Keep directory structure
+!inputs/**/.gitkeep
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
