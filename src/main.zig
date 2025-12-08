@@ -153,7 +153,17 @@ fn runSolution(allocator: std.mem.Allocator, day: u8, part: u8, input: []const u
                 std.debug.print("Result: {d}\n", .{result});
             }
         },
-        3...12 => {
+        3 => {
+            const day03 = @import("solutions/day03.zig");
+            if (part == 1) {
+                const result = try day03.part1(allocator, input);
+                std.debug.print("Result: {d}\n", .{result});
+            } else {
+                const result = try day03.part2(allocator, input);
+                std.debug.print("Result: {d}\n", .{result});
+            }
+        },
+        4...12 => {
             std.debug.print("Day {d} not implemented yet!\n", .{day});
             return error.NotImplemented;
         },
