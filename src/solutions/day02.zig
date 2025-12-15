@@ -51,7 +51,7 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var product_ranges = std.mem.splitScalar(u8, input, ',');
     var sum_invalid_ids: i64 = 0;
     while (product_ranges.next()) |product_range| {
-        const trimmed = std.mem.trim(u8, product_range, "\t\n\r");
+        const trimmed = std.mem.trim(u8, product_range, &std.ascii.whitespace);
         if (trimmed.len == 0) continue; 
 
         std.debug.print("{s}\n", .{trimmed});
@@ -73,7 +73,7 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var sum_invalid_ids: i64 = 0;
     var product_ranges = std.mem.splitScalar(u8, input, ',');
     while (product_ranges.next()) |product_range| {
-        const trimmed = std.mem.trim(u8, product_range, "\t\n\r");
+        const trimmed = std.mem.trim(u8, product_range, &std.ascii.whitespace);
         if (trimmed.len == 0) continue; 
 
         std.debug.print("{s}\n", .{trimmed});

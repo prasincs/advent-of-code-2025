@@ -79,6 +79,51 @@ pub fn parseInts(comptime T: type, allocator: std.mem.Allocator, line: []const u
     return numbers.toOwnedSlice();
 }
 
+
+/// 2D grid array of characters stored as flat array for efficient memory access
+pub const Grid = struct {
+    data: []u8,
+    rows: usize,
+    cols: usize,
+    allocator: std.mem.Allocator,
+
+    pub fn init(allocator: std.mem.Allocator, input: []const u8) !Grid {
+        var rows = std.ArrayList([]const u8){};
+        defer rows.deinit(allocator);
+
+        var lines = std.mem.splitScalar(u8, input, '\n');
+        while (lines.next()) |line| {
+            if (line.len == 0) continue;
+            try rows.append(allocator, line);
+        }
+
+        const row_count = rows.items.len;
+        const col_count = if (row_count > 0) rows.items[0].len else 0;
+
+        var data = try allocator.alloc(u8, row_count * col_count);
+        for (rows.items, 0..) |row, i| {
+            @memcpy(data[i * col_count .. (i + 1) * col_count], row);
+        }
+
+        return Grid{
+            .data = data,
+            .rows = row_count,
+            .cols = col_count,
+            .allocator = allocator,
+        };
+    }
+    pub fn deinit(self: Grid) void {
+        self.allocator.free(self.data);
+    }
+
+    pub fn get(self: Grid, row: usize, col: usize) u8 {
+        return self.data[row * self.cols + col];
+    }
+    pub fn set(self: *Grid, row: usize, col: usize, val: u8) void {
+        self.data[row * self.cols + col] = val;
+    }
+};
+
 test "parseInt" {
     try std.testing.expectEqual(@as(i32, 42), try parseInt(i32, "42"));
     try std.testing.expectEqual(@as(i32, -42), try parseInt(i32, "-42"));

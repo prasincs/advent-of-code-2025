@@ -37,7 +37,7 @@ pub fn main() !void {
             // Read the input file
             const input = if (config.sample_file) |sample|
                 try utils.readInputFile(allocator, config.day, sample)
-            else
+                else
                 try utils.readInputFile(allocator, config.day, "input.txt");
             defer allocator.free(input);
 
@@ -57,12 +57,12 @@ fn parseArgs(args: []const []const u8) !Config {
     const command_str = args[1];
     const command = if (std.mem.eql(u8, command_str, "run"))
         Command.run
-    else if (std.mem.eql(u8, command_str, "download"))
-        Command.download
-    else if (std.mem.eql(u8, command_str, "--help") or std.mem.eql(u8, command_str, "-h"))
-        return error.HelpRequested
-    else
-        return error.InvalidCommand;
+        else if (std.mem.eql(u8, command_str, "download"))
+            Command.download
+            else if (std.mem.eql(u8, command_str, "--help") or std.mem.eql(u8, command_str, "-h"))
+                return error.HelpRequested
+                else
+                return error.InvalidCommand;
 
     var config = Config{
         .command = command,
@@ -105,72 +105,62 @@ fn printUsage() !void {
     const stderr = &stderr_writer.interface;
 
     try stderr.writeAll(
-        \\Advent of Code 2025 Runner
-        \\
-        \\Usage:
-        \\  zig build run -- <command> --day <1-12> [options]
-        \\
-        \\Commands:
-        \\  run                   Run a solution
-        \\  download              Download puzzle input
-        \\
-        \\Options:
-        \\  --day, -d <N>         Day number (1-12) [required]
-        \\  --sample, -s <file>   Use sample input file (e.g., sample1.txt)
-        \\  --part, -p <1|2>      Run part 1 or 2 (default: 1) [run only]
-        \\  --help, -h            Show this help message
-        \\
-        \\Examples:
-        \\  zig build run -- run --day 1
-        \\  zig build run -- run --day 1 --sample sample1.txt
-        \\  zig build run -- run --day 1 --part 2
-        \\  zig build run -- download --day 1
-        \\
-    );
+    \\Advent of Code 2025 Runner
+\\
+\\Usage:
+\\  zig build run -- <command> --day <1-12> [options]
+\\
+\\Commands:
+\\  run                   Run a solution
+\\  download              Download puzzle input
+\\
+\\Options:
+\\  --day, -d <N>         Day number (1-12) [required]
+\\  --sample, -s <file>   Use sample input file (e.g., sample1.txt)
+\\  --part, -p <1|2>      Run part 1 or 2 (default: 1) [run only]
+\\  --help, -h            Show this help message
+\\
+\\Examples:
+\\  zig build run -- run --day 1
+\\  zig build run -- run --day 1 --sample sample1.txt
+\\  zig build run -- run --day 1 --part 2
+\\  zig build run -- download --day 1
+\\
+);
 
     try stderr.flush();
 }
 
+fn comptimePrint(comptime fmt: []const u8, args: anytype) []const u8 {
+    return std.fmt.comptimePrint(fmt, args);
+}
+
 fn runSolution(allocator: std.mem.Allocator, day: u8, part: u8, input: []const u8) !void {
-    switch (day) {
-        1 => {
-            const day01 = @import("solutions/day01.zig");
-            if (part == 1) {
-                const result = try day01.part1(allocator, input);
-                std.debug.print("Result: {d}\n", .{result});
-            } else {
-                const result = try day01.part2(allocator, input);
-                std.debug.print("Result: {d}\n", .{result});
-            }
-        },
-        2 => {
-            const day02 = @import("solutions/day02.zig");
-            if (part == 1) {
-                const result = try day02.part1(allocator, input);
-                std.debug.print("Result: {d}\n", .{result});
-            } else {
-                const result = try day02.part2(allocator, input);
-                std.debug.print("Result: {d}\n", .{result});
-            }
-        },
-        3 => {
-            const day03 = @import("solutions/day03.zig");
-            if (part == 1) {
-                const result = try day03.part1(allocator, input);
-                std.debug.print("Result: {d}\n", .{result});
-            } else {
-                const result = try day03.part2(allocator, input);
-                std.debug.print("Result: {d}\n", .{result});
-            }
-        },
-        4...12 => {
+    const result = switch (day) {
+        1 => try runDay(@import("solutions/day01.zig"), allocator, part, input),
+        2 => try runDay(@import("solutions/day02.zig"), allocator, part, input),
+        3 => try runDay(@import("solutions/day03.zig"), allocator, part, input),
+        4 => try runDay(@import("solutions/day04.zig"), allocator, part, input),
+        5 => try runDay(@import("solutions/day05.zig"), allocator, part, input),
+        6 => try runDay(@import("solutions/day06.zig"), allocator, part, input),
+        7 => try runDay(@import("solutions/day07.zig"), allocator, part, input),
+        8 => try runDay(@import("solutions/day08.zig"), allocator, part, input),
+        9 => try runDay(@import("solutions/day09.zig"), allocator, part, input),
+        10 => try runDay(@import("solutions/day10.zig"), allocator, part, input),
+        11 => try runDay(@import("solutions/day11.zig"), allocator, part, input),
+        12 => try runDay(@import("solutions/day12.zig"), allocator, part, input),
+        else => {
             std.debug.print("Day {d} not implemented yet!\n", .{day});
             return error.NotImplemented;
         },
-        13...25 => {
-            std.debug.print("Day {d} is beyond the 12 days in AoC 2025!\n", .{day});
-            return error.InvalidDay;
-        },
-        else => unreachable,
-    }
+    };
+    std.debug.print("Result: {d}\n", .{result});
+}
+
+
+fn runDay(day_mod: anytype, allocator: std.mem.Allocator, part: u8, input: []const u8) !i64 {
+    return if (part == 1)
+        try day_mod.part1(allocator, input)
+    else
+        try day_mod.part2(allocator, input);
 }
