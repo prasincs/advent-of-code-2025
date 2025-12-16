@@ -1,32 +1,19 @@
 const std = @import("std");
+const utils = @import("utils");
 
-const Range = struct {
-    start: u64,
-    end: u64,
-};
 
 fn contains(haystack: []const u8, needle: []const u8) bool {
     return std.mem.indexOf(u8, haystack, needle) != null;
 }
 
-fn parseIDs(s: []const u8) !Range {
-    if (s.len < 3) return error.InvalidInput;
 
-    var nums = std.mem.splitScalar(u8, s, '-');
-    const start_str = nums.next() orelse return error.InvalidInput;
-    const end_str = nums.next() orelse return error.InvalidInput;
-
-    const start_id = try std.fmt.parseInt(u64, start_str, 10);
-    const end_id = try std.fmt.parseInt(u64, end_str, 10);
-    return .{ .start = start_id, .end = end_id };
-}
 
 
 pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var lines = std.mem.splitScalar(u8, input, '\n');
     var to_check = std.ArrayList(u64){};
     defer to_check.deinit(allocator);
-    var product_ranges = std.ArrayList(Range){};
+    var product_ranges = std.ArrayList(utils.Range){};
     defer product_ranges.deinit(allocator);
 
     while (lines.next()) |line| {
@@ -36,7 +23,7 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
             const ingredient_id = try std.fmt.parseInt(u64, trimmed, 10);
             try to_check.append(allocator, ingredient_id);
         } else {
-            const product_range = try parseIDs(trimmed);
+            const product_range = try utils.parseIDs(trimmed);
             try product_ranges.append(allocator, product_range);
         }
     }
@@ -61,7 +48,7 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var lines = std.mem.splitScalar(u8, input, '\n');
-    var product_ranges = std.ArrayList(Range){};
+    var product_ranges = std.ArrayList(utils.Range){};
     defer product_ranges.deinit(allocator);
 
     // Parse only the product ranges
@@ -69,7 +56,7 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
         const trimmed = std.mem.trim(u8, line, &std.ascii.whitespace);
         if (trimmed.len == 0) continue;
         if (contains(trimmed, "-")) {
-            const product_range = try parseIDs(trimmed);
+            const product_range = try utils.parseIDs(trimmed);
             try product_ranges.append(allocator, product_range);
         }
     }
@@ -78,8 +65,8 @@ pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
     if (product_ranges.items.len == 0) return 0;
 
     // Sort ranges by start position
-    std.mem.sort(Range, product_ranges.items, {}, struct {
-        fn lessThan(_: void, a: Range, b: Range) bool {
+    std.mem.sort(utils.Range, product_ranges.items, {}, struct {
+        fn lessThan(_: void, a: utils.Range, b: utils.Range) bool {
             return a.start < b.start;
         }
     }.lessThan);

@@ -1,11 +1,16 @@
 const std = @import("std");
 
+pub const Range = struct {
+    start: u64,
+    end: u64,
+};
+
 pub fn readInputFile(allocator: std.mem.Allocator, day: u8, filename: []const u8) ![]u8 {
     const path = try std.fmt.allocPrint(
-        allocator,
-        "inputs/day{d:0>2}/{s}",
-        .{ day, filename },
-    );
+    allocator,
+    "inputs/day{d:0>2}/{s}",
+    .{ day, filename },
+);
     defer allocator.free(path);
 
     const Io = std.Io;
@@ -18,12 +23,24 @@ pub fn readInputFile(allocator: std.mem.Allocator, day: u8, filename: []const u8
     };
 }
 
+pub fn parseIDs(s: []const u8) !Range {
+    if (s.len < 3) return error.InvalidInput;
+
+    var nums = std.mem.splitScalar(u8, s, '-');
+    const start_str = nums.next() orelse return error.InvalidInput;
+    const end_str = nums.next() orelse return error.InvalidInput;
+
+    const start_id = try std.fmt.parseInt(u64, start_str, 10);
+    const end_id = try std.fmt.parseInt(u64, end_str, 10);
+    return .{ .start = start_id, .end = end_id };
+}
+
 pub fn ensureInputDirectory(day: u8) !void {
     const path = try std.fmt.allocPrint(
-        std.heap.page_allocator,
-        "inputs/day{d:0>2}",
-        .{day},
-    );
+    std.heap.page_allocator,
+    "inputs/day{d:0>2}",
+    .{day},
+);
     defer std.heap.page_allocator.free(path);
 
     std.fs.cwd().makePath(path) catch |err| switch (err) {
@@ -36,10 +53,10 @@ pub fn writeInputFile(allocator: std.mem.Allocator, day: u8, filename: []const u
     try ensureInputDirectory(day);
 
     const path = try std.fmt.allocPrint(
-        allocator,
-        "inputs/day{d:0>2}/{s}",
-        .{ day, filename },
-    );
+    allocator,
+    "inputs/day{d:0>2}/{s}",
+    .{ day, filename },
+);
     defer allocator.free(path);
 
     const file = try std.fs.cwd().createFile(path, .{});
@@ -67,16 +84,20 @@ pub fn parseInt(comptime T: type, s: []const u8) !T {
     return std.fmt.parseInt(T, std.mem.trim(u8, s, &std.ascii.whitespace), 10);
 }
 
-pub fn parseInts(comptime T: type, allocator: std.mem.Allocator, line: []const u8) ![]T {
-    var numbers = std.ArrayList(T).init(allocator);
-    var iter = std.mem.tokenizeAny(u8, line, " \t,");
+
+/// Parse integers separated by any of the given separator characters
+pub fn parseInts(comptime T: type, allocator: std.mem.Allocator, line: []const u8, separators: []const u8) ![]T {
+    var numbers = std.ArrayList(T){};
+    defer numbers.deinit(allocator);
+
+    var iter = std.mem.tokenizeAny(u8, line, separators);
 
     while (iter.next()) |token| {
-        const num = try parseInt(T, token);
-        try numbers.append(num);
+        const num = try std.fmt.parseInt(T, token, 10);
+        try numbers.append(allocator, num);
     }
 
-    return numbers.toOwnedSlice();
+    return try numbers.toOwnedSlice(allocator);
 }
 
 
@@ -133,10 +154,15 @@ test "parseInt" {
 test "parseInts" {
     const allocator = std.testing.allocator;
 
-    const result = try parseInts(i32, allocator, "1 2 3 4 5");
+    const result = try parseInts(i32, allocator, "1 2 3 4 5", " ");
     defer allocator.free(result);
 
     try std.testing.expectEqualSlices(i32, &[_]i32{ 1, 2, 3, 4, 5 }, result);
+
+    const result2 = try parseInts(i32, allocator, "1,2,3", ",");
+    defer allocator.free(result2);
+
+    try std.testing.expectEqualSlices(i32, &[_]i32{ 1, 2, 3 }, result2);
 }
 
 test "splitLines" {
