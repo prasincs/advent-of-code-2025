@@ -80,11 +80,60 @@ pub fn part1(allocator: std.mem.Allocator, input: []const u8) !i64 {
     return split_count;
 }
 
+fn countTimelines(grid: *const utils.Grid, row: usize, col: usize, memo: *std.AutoHashMap(ActiveBeam, i64)) !i64 {
+    // Base case: exited grid
+    if (row >= grid.rows) return 1;
+
+    const beam = ActiveBeam{ .row = row, .col = col };
+
+    // Check memoization
+    if (memo.get(beam)) |count| {
+        return count;
+    }
+
+    const cell = grid.get(row, col);
+    var total: i64 = 0;
+
+    if (cell == '^') {
+        // Splitter - timeline branches
+        // Left path
+        if (col > 0) {
+            total += try countTimelines(grid, row + 1, col - 1, memo);
+        }
+        // Right path
+        if (col + 1 < grid.cols) {
+            total += try countTimelines(grid, row + 1, col + 1, memo);
+        }
+        // If both paths out of bounds, this is a terminal timeline
+        if (col == 0 or col + 1 >= grid.cols) {
+            if (total == 0) total = 1;
+        }
+    } else {
+        // Empty space - continue down
+        total = try countTimelines(grid, row + 1, col, memo);
+    }
+
+    try memo.put(beam, total);
+    return total;
+}
+
 pub fn part2(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    _ = allocator;
-    _ = input;
-    // TODO: Implement part 2
-    return 0;
+    var grid = try utils.Grid.init(allocator, input);
+    defer grid.deinit();
+
+    // Find starting position 'S' in first row
+    var start_col: usize = 0;
+    for (0..grid.cols) |col| {
+        if (grid.get(0, col) == 'S') {
+            start_col = col;
+            break;
+        }
+    }
+
+    var memo = std.AutoHashMap(ActiveBeam, i64).init(allocator);
+    defer memo.deinit();
+
+    return try countTimelines(&grid, 1, start_col, &memo);
 }
 
 test "part1" {
@@ -114,8 +163,23 @@ test "part1" {
 test "part2" {
     const allocator = std.testing.allocator;
     const input =
-        \\example input here
+        \\.......S.......
+        \\...............
+        \\.......^.......
+        \\...............
+        \\......^.^......
+        \\...............
+        \\.....^.^.^.....
+        \\...............
+        \\....^.^...^....
+        \\...............
+        \\...^.^...^.^...
+        \\...............
+        \\..^...^.....^..
+        \\...............
+        \\.^.^.^.^.^...^.
+        \\...............
     ;
     const result = try part2(allocator, input);
-    try std.testing.expectEqual(@as(i64, 0), result);
+    try std.testing.expectEqual(@as(i64, 40), result);
 }
