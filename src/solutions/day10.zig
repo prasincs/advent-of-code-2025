@@ -26,8 +26,8 @@ fn parseMachine(allocator: std.mem.Allocator, line: []const u8) !Machine {
     }
 
     // Parse button wiring schematics (x,y,z) - there can be multiple
-    var buttons = std.ArrayList(u64).init(allocator);
-    errdefer buttons.deinit();
+    var buttons = std.ArrayList(u64){};
+    errdefer buttons.deinit(allocator);
 
     var pos: usize = bracket_end + 1;
     while (pos < line.len) {
@@ -50,7 +50,7 @@ fn parseMachine(allocator: std.mem.Allocator, line: []const u8) !Machine {
             const idx = try std.fmt.parseInt(usize, idx_str, 10);
             button_mask |= @as(u64, 1) << @intCast(idx);
         }
-        try buttons.append(button_mask);
+        try buttons.append(allocator, button_mask);
 
         pos = paren_end + 1;
     }
@@ -58,7 +58,7 @@ fn parseMachine(allocator: std.mem.Allocator, line: []const u8) !Machine {
     return Machine{
         .target = target,
         .num_lights = num_lights,
-        .buttons = try buttons.toOwnedSlice(),
+        .buttons = try buttons.toOwnedSlice(allocator),
         .allocator = allocator,
     };
 }
